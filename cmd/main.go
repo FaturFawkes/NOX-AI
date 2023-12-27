@@ -28,9 +28,6 @@ func main() {
 	// Initial configuration
 	cfg := config.InitService()
 
-	// Initial context
-	ctx := context.Background()
-
 	// Initial logger
 	logger := cfg.GetLogger()
 
