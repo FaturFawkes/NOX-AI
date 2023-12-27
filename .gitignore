@@ -1,0 +1,6 @@
+.env
+*.db
+go.sum
+vendor
+*.tar
+docker-compose.yml
