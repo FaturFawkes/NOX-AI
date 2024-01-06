@@ -7,7 +7,9 @@ import (
 	"net/http"
 	"nox-ai/internal/delivery"
 	"nox-ai/internal/repository"
+	"nox-ai/internal/service"
 	"nox-ai/internal/usecase"
+	"nox-ai/pkg/client"
 	"nox-ai/pkg/config"
 	"nox-ai/pkg/migration"
 	"os"
@@ -17,6 +19,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/sashabaranov/go-openai"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
@@ -39,10 +42,12 @@ func main() {
 	logger.Info("Initializing redis connection")
 	redis := cfg.GetRedis()
 
+	// Init GPT
+	logger.Info("Initializing gpt client")
+	gpt := cfg.GetGPT()
+
 	// Automigrate Database
 	migration.AutoMigrate(db)
-
-	// Whatsapp Client
 
 	e := echo.New()
 	e.Pre(middleware.RemoveTrailingSlash())
@@ -54,8 +59,8 @@ func main() {
 	}))
 
 	ctx, cancel := context.WithCancel(context.Background())
-	
-	initRoute(e, db, redis, logger)
+
+	initRoute(e, db, redis, gpt, logger, cfg.GetWhatsapp())
 
 	serverErr := make(chan os.Signal, 1)
 	signal.Notify(serverErr, os.Interrupt)
@@ -77,7 +82,7 @@ func main() {
 		if err := e.Shutdown(shutdownCtx); err != nil {
 			e.Logger.Printf("Server shutdown error: %v", err)
 		}
-		
+
 		e.Logger.Info("Server gracefully stopped")
 		cancel()
 	case <-ctx.Done():
@@ -86,11 +91,12 @@ func main() {
 
 }
 
-func initRoute(e *echo.Echo, db *gorm.DB, redis *redis.Client, logger *zap.Logger) {
+func initRoute(e *echo.Echo, db *gorm.DB, redis *redis.Client, gpt *openai.Client, logger *zap.Logger, wa config.Whatsapp) {
 
 	repo := repository.NewRepository(db)
-	usecase := usecase.NewUsecase(repo, logger)
-	handler := delivery.NewDelivery(e, usecase)
+	service := service.NewService(gpt, client.NewHttpClient("https://graph.facebook.com", context.Background(), logger, 10*time.Second), wa)
+	usecase := usecase.NewUsecase(repo, redis, logger, service)
+	handler := delivery.NewDelivery(e, usecase, logger)
 
 	e.POST("/message", handler.Message)
 }

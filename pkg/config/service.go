@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/sashabaranov/go-openai"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
@@ -15,6 +16,8 @@ type ServiceConfig struct {
 	Logger      *zap.Logger
 	DB          *gorm.DB
 	Redis       *redis.Client
+	GPT         *openai.Client
+	Whatsapp    Whatsapp
 }
 
 type IServiceConfig interface {
@@ -22,6 +25,8 @@ type IServiceConfig interface {
 	GetLogger() *zap.Logger
 	GetDatabase() *gorm.DB
 	GetRedis() *redis.Client
+	GetGPT() *openai.Client
+	GetWhatsapp() Whatsapp
 }
 
 func InitService() IServiceConfig {
@@ -75,6 +80,31 @@ func InitService() IServiceConfig {
 		panic("redis db cannot be nil")
 	}
 
+	apikeyGPT := os.Getenv("APIKEY_OPENAI")
+	if apikeyGPT == "" {
+		panic("apikey gpt cannot be nil")
+	}
+
+	tokenWa := os.Getenv("TOKEN_WA")
+	if tokenWa == "" {
+		panic("Whatsapp Token cannot be nil")
+	}
+
+	hostWa := os.Getenv("HOST_WA")
+	if hostWa == "" {
+		panic("Whatsapp Host cannot be nil")
+	}
+
+	versionWa := os.Getenv("VERSION_WA")
+	if versionWa == "" {
+		panic("Whatsapp Version cannot be nil")
+	}
+
+	numberWa := os.Getenv("NUMBER_ID_WA")
+	if numberWa == "" {
+		panic("Whatsapp phone number id cannot be nil")
+	}
+
 	cnvRedisDb, err := strconv.Atoi(redisDB)
 	if err != nil {
 		panic(err)
@@ -95,10 +125,22 @@ func InitService() IServiceConfig {
 		DB:       cnvRedisDb,
 	})
 
+	gpt := NewGPT(apikeyGPT)
+
+	whatsapp := Whatsapp{
+		Token:   tokenWa,
+		Host:    hostWa,
+		Version: versionWa,
+		Number:  numberWa,
+	}
+
 	return &ServiceConfig{
-		Logger: logger,
-		DB:     db,
-		Redis:  redis,
+		Logger:      logger,
+		GPT:         gpt,
+		DB:          db,
+		Redis:       redis,
+		ServicePort: servicePort,
+		Whatsapp:    whatsapp,
 	}
 }
 
@@ -116,4 +158,12 @@ func (sc *ServiceConfig) GetRedis() *redis.Client {
 
 func (sc *ServiceConfig) GetServicePort() string {
 	return sc.ServicePort
+}
+
+func (sc *ServiceConfig) GetGPT() *openai.Client {
+	return sc.GPT
+}
+
+func (sc *ServiceConfig) GetWhatsapp() Whatsapp {
+	return sc.Whatsapp
 }

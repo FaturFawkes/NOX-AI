@@ -18,7 +18,6 @@ type User struct {
 	gorm.Model
 	Name      string
 	Number    string
-	ExpiredAt time.Time
+	ExpiredAt *time.Time
 	Plan      Plan `gorm:"type:enum('free', 'basic', 'premium')"`
-	Limit     int
 }

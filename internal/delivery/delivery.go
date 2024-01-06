@@ -1,19 +1,20 @@
 package delivery
 
 import (
-	"context"
 	"nox-ai/domain/usecase"
 
 	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
 )
 
 type Delivery struct {
-	ctx context.Context
 	usecase usecase.IUsecase
+	logger  *zap.Logger
 }
 
-func NewDelivery(e *echo.Echo, usecase usecase.IUsecase) *Delivery {
+func NewDelivery(e *echo.Echo, usecase usecase.IUsecase, logger *zap.Logger) *Delivery {
 	return &Delivery{
 		usecase: usecase,
+		logger:  logger,
 	}
 }
