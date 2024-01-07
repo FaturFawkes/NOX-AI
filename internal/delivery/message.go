@@ -34,7 +34,7 @@ func (dlv *Delivery) Message(c echo.Context) error {
 	case "text":
 		err = dlv.usecase.HandleText(c.Request().Context(), user, message.Entry[0].Changes[0].Value.Messages[0].ID, message.Entry[0].Changes[0].Value.Messages[0].Text.Body)
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, "Error handle text")
+			return c.JSON(http.StatusInternalServerError, "Error handle message")
 		}
 	case "reaction":
 	
@@ -47,7 +47,10 @@ func (dlv *Delivery) Message(c echo.Context) error {
 	case "button":
 	
 	case "interactive":
-
+		err = dlv.usecase.HandleInteractive(c.Request().Context(), user, message.Entry[0].Changes[0].Value.Messages[0].ID,  message.Entry[0].Changes[0].Value.Messages[0].Interactive.ListReply.ID)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, "Error handle interactive message")
+		}
 	}
 	return nil
 }

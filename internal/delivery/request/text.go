@@ -1,5 +1,7 @@
 package request
 
+import "encoding/json"
+
 type WhatsAppBusinessAccount struct {
 	Object string  `json:"object"`
 	Entry  []Entry `json:"entry"`
@@ -37,13 +39,35 @@ type Profile struct {
 }
 
 type Message struct {
-	From      string `json:"from"`
-	ID        string `json:"id"`
-	Timestamp string `json:"timestamp"`
-	Text      Text   `json:"text"`
-	Type      string `json:"type"`
+	Context     Context     `json:"context,omitempty"`
+	From        string      `json:"from"`
+	ID          string      `json:"id"`
+	Timestamp   string      `json:"timestamp"`
+	Text        Text        `json:"text"`
+	Type        string      `json:"type"`
+	Interactive Interactive `json:"interactive"`
 }
 
 type Text struct {
 	Body string `json:"body"`
+}
+
+type Context struct {
+	From string `json:"from"`
+	ID   string `json:"id"`
+}
+
+type Interactive struct {
+	Type      string    `json:"type"`
+	ListReply ListReply `json:"list_reply"`
+}
+
+type ListReply struct {
+	ID          string `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+}
+
+type RequestData struct {
+	Body json.RawMessage `json:"body"`
 }

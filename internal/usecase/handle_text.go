@@ -28,7 +28,7 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 	// Get history gpt user
 	promptRedis, err := getRedis(ctx, u.redis, user.Number+":prompt")
 	if err != nil {
-		u.logger.Error("Error get data redis", zap.Error(err))
+		u.logger.Info("No history from redis", zap.Error(err))
 	}
 
 	if promptRedis != "" {
@@ -82,12 +82,10 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 							{
 								ID: "new-chat",
 								Title: "New Chat",
-								Description: "Create new context with Chat GPT",
 							},
 							{
 								ID: "my-account",
 								Title: "My Account",
-								Description: "Describe your account and plan type",
 							},
 						},
 					},
@@ -95,7 +93,6 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 			},
 		},
 	})
-
 	if err != nil {
 		u.logger.Error("Error sending message", zap.Error(err))
 		return err
@@ -111,15 +108,6 @@ func getRedis(ctx context.Context, redis *redis.Client, key string) (string, err
 	}
 
 	return res, nil
-}
-
-func deleteRedis(ctx context.Context, redis *redis.Client, key string) error {
-	err := redis.Del(ctx, key).Err()
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func setRedis(ctx context.Context, redis *redis.Client, key string, data any, duration time.Duration) error {
