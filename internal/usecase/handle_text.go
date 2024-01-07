@@ -63,14 +63,36 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 		return err
 	}
 
-	err = u.service.SendWA(ctx, user.Number, model.WhatsAppMessage{
+	err = u.service.SendWA(ctx, user.Number, model.InteractiveMessage{
 		MessagingProduct: "whatsapp",
-		RecipientType:    "individual",
-		To:               user.Number,
-		Type:             "text",
-		Text: model.MessageText{
-			PreviewURL: false,
-			Body:       resGpt,
+		RecipientType: "individual",
+		To: user.Number,
+		Type: "interactive",
+		Interactive: model.InteractiveData{
+			Type: "list",
+			Body: model.InteractiveText{
+				Text: resGpt,
+			},
+			Action: model.InteractiveAction{
+				Button: "Explore",
+				Sections: []model.InteractiveSection{
+					{
+						Title: "Menu",
+						Rows: []model.InteractiveRow{
+							{
+								ID: "new-chat",
+								Title: "New Chat",
+								Description: "Create new context with Chat GPT",
+							},
+							{
+								ID: "my-account",
+								Title: "My Account",
+								Description: "Describe your account and plan type",
+							},
+						},
+					},
+				},
+			},
 		},
 	})
 

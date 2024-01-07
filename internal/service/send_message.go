@@ -5,15 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"nox-ai/internal/service/model"
 )
 
-func (s *Service) SendWA(ctx context.Context, number string, data model.WhatsAppMessage) error {
+func (s *Service) SendWA(ctx context.Context, number string, data any) error {
 
 	dataByte, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
+
+	fmt.Println("INI REQUEST ", string(dataByte))
 
 	header := make(map[string][]string)
 	header["Authorization"] = []string{"Bearer " + s.wa.Token}
