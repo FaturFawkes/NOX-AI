@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func (s *Service) SendWA(ctx context.Context, number string, data any) error {
+func (s *Service) SendWA(ctx context.Context, data any) error {
 
 	dataByte, err := json.Marshal(data)
 	if err != nil {

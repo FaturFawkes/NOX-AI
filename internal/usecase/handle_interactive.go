@@ -43,7 +43,7 @@ func NewChat(ctx context.Context, redis *redis.Client, service service.IService,
 		return err
 	}
 
-	err = service.SendWA(ctx, user.Number, model.WhatsAppMessage{
+	err = service.SendWA(ctx, model.WhatsAppMessage{
 		MessagingProduct: "whatsapp",
 		RecipientType:    "individual",
 		To:               user.Number,
@@ -73,7 +73,7 @@ func MyAccount(ctx context.Context, service service.IService, user *entity.User)
 		message = "Your account is not registered"
 	}
 
-	err := service.SendWA(ctx, user.Number, model.WhatsAppMessage{
+	err := service.SendWA(ctx, model.WhatsAppMessage{
 		MessagingProduct: "whatsapp",
 		RecipientType:    "individual",
 		To:               user.Number,

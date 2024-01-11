@@ -9,6 +9,6 @@ import (
 
 type IService interface {
 	TextGPT(ctx context.Context, message []openai.ChatCompletionMessage) (string, error)
-	SendWA(ctx context.Context, number string, data any) error
+	SendWA(ctx context.Context, data any) error
 	MarkRead(ctx context.Context, data model.WhatsAppStatus) error
 }

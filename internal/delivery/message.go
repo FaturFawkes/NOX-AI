@@ -1,6 +1,7 @@
 package delivery
 
 import (
+	"fmt"
 	"net/http"
 	"nox-ai/domain/entity"
 	"nox-ai/internal/delivery/request"
@@ -10,8 +11,16 @@ import (
 )
 
 func (dlv *Delivery) Message(c echo.Context) error {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Panic occured", r)
+			return
+		}
+		fmt.Println("Application running perfectly")
+	}()
+
 	var message request.WhatsAppBusinessAccount
-	
+
 	err := c.Bind(&message)
 	if err != nil {
 		dlv.logger.Error("Error binding message", zap.Error(err))
@@ -19,10 +28,10 @@ func (dlv *Delivery) Message(c echo.Context) error {
 	}
 
 	data := &entity.User{
-		Name: message.Entry[0].Changes[0].Value.Contacts[0].Profile.Name,
-		Number: message.Entry[0].Changes[0].Value.Contacts[0].WaID,
+		Name:      message.Entry[0].Changes[0].Value.Contacts[0].Profile.Name,
+		Number:    message.Entry[0].Changes[0].Value.Contacts[0].WaID,
 		ExpiredAt: nil,
-		Plan: entity.Free,
+		Plan:      entity.Free,
 	}
 
 	user, err := dlv.usecase.CheckNumber(c.Request().Context(), data)
@@ -34,23 +43,23 @@ func (dlv *Delivery) Message(c echo.Context) error {
 	case "text":
 		err = dlv.usecase.HandleText(c.Request().Context(), user, message.Entry[0].Changes[0].Value.Messages[0].ID, message.Entry[0].Changes[0].Value.Messages[0].Text.Body)
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, "Error handle message")
+			return c.JSON(http.StatusOK, "Error handle message")
 		}
 	case "reaction":
-	
+
 	case "image":
-	
+
 	case "sticker":
 
 	case "location":
-	
+
 	case "button":
-	
+
 	case "interactive":
-		err = dlv.usecase.HandleInteractive(c.Request().Context(), user, message.Entry[0].Changes[0].Value.Messages[0].ID,  message.Entry[0].Changes[0].Value.Messages[0].Interactive.ListReply.ID)
+		err = dlv.usecase.HandleInteractive(c.Request().Context(), user, message.Entry[0].Changes[0].Value.Messages[0].ID, message.Entry[0].Changes[0].Value.Messages[0].Interactive.ListReply.ID)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, "Error handle interactive message")
 		}
 	}
-	return nil
+	return c.JSON(http.StatusOK, nil)
 }
