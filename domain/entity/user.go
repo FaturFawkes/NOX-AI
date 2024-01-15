@@ -16,8 +16,18 @@ const (
 
 type User struct {
 	gorm.Model
-	Name      string
-	Number    string
-	ExpiredAt *time.Time
-	Plan      Plan `gorm:"type:enum('free', 'basic', 'premium')"`
+	Name             string
+	Number           string
+	ExpiredAt        *time.Time
+	Plan             Plan `gorm:"type:enum('free', 'basic', 'premium')"`
+	RemainingRequest int
+	UserLog          []UserLog `gorm:"foreignKey:UserID;reference:ID"`
+}
+
+type UserLog struct {
+	gorm.Model
+	UserID        uint
+	TokenUsage    int
+	TokenRequest  int
+	TokenResponse int
 }

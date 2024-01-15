@@ -19,11 +19,10 @@ func (s *Service) MarkRead(ctx context.Context, data model.WhatsAppStatus) error
 	header["Authorization"] = []string{"Bearer " + s.wa.Token}
 	header["Content-Type"] = []string{"application/json"}
 
-	res, err := s.http.Request(http.MethodPost, fmt.Sprintf("/%s/%s/messages", s.wa.Version, s.wa.Number), dataByte, header)
+	_, err = s.http.Request(http.MethodPost, fmt.Sprintf("/%s/%s/messages", s.wa.Version, s.wa.Number), dataByte, header)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("INI RESPONSE ", string(res))
 	return nil
 }

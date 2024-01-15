@@ -46,6 +46,7 @@ type Message struct {
 	Text        Text        `json:"text"`
 	Type        string      `json:"type"`
 	Interactive Interactive `json:"interactive"`
+	Image       Image       `json:"image"`
 }
 
 type Text struct {
@@ -70,4 +71,11 @@ type ListReply struct {
 
 type RequestData struct {
 	Body json.RawMessage `json:"body"`
+}
+
+type Image struct {
+	Caption  string `json:"caption"`
+	MimeType string `json:"mime_type"`
+	SHA256   string `json:"sha256"`
+	ID       string `json:"id"`
 }

@@ -1,6 +1,7 @@
 package delivery
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"nox-ai/domain/entity"
@@ -24,7 +25,7 @@ func (dlv *Delivery) Message(c echo.Context) error {
 	err := c.Bind(&message)
 	if err != nil {
 		dlv.logger.Error("Error binding message", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, "bad request")
+		return c.JSON(http.StatusOK, "bad request")
 	}
 
 	data := &entity.User{
@@ -36,15 +37,15 @@ func (dlv *Delivery) Message(c echo.Context) error {
 
 	user, err := dlv.usecase.CheckNumber(c.Request().Context(), data)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, zap.Error(err))
+		return c.JSON(http.StatusOK, zap.Error(err))
 	}
 
 	switch message.Entry[0].Changes[0].Value.Messages[0].Type {
 	case "text":
-		err = dlv.usecase.HandleText(c.Request().Context(), user, message.Entry[0].Changes[0].Value.Messages[0].ID, message.Entry[0].Changes[0].Value.Messages[0].Text.Body)
-		if err != nil {
-			return c.JSON(http.StatusOK, "Error handle message")
-		}
+		go func ()  {
+			err = dlv.usecase.HandleText(context.Background(), user, message.Entry[0].Changes[0].Value.Messages[0].ID, message.Entry[0].Changes[0].Value.Messages[0].Text.Body)
+		}()
+		return c.JSON(http.StatusOK, nil)
 	case "reaction":
 
 	case "image":

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"nox-ai/domain/entity"
 	"nox-ai/internal/service/model"
+	"strings"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -29,9 +30,9 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 	if text == "/menu" {
 		err = u.service.SendWA(ctx, model.InteractiveMessage{
 			MessagingProduct: "whatsapp",
-			RecipientType: "individual",
-			To: user.Number,
-			Type: "interactive",
+			RecipientType:    "individual",
+			To:               user.Number,
+			Type:             "interactive",
 			Interactive: model.InteractiveData{
 				Type: "list",
 				Body: model.InteractiveText{
@@ -44,11 +45,11 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 							Title: "Menu",
 							Rows: []model.InteractiveRow{
 								{
-									ID: "new-chat",
+									ID:    "new-chat",
 									Title: "New Chat",
 								},
 								{
-									ID: "my-account",
+									ID:    "my-account",
 									Title: "My Account",
 								},
 							},
@@ -61,8 +62,73 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 			u.logger.Error("Error sending message", zap.Error(err))
 			return err
 		}
+	} else if strings.Contains(text, "/image") {
+		prompt := strings.Split(text, "/image")
+		if user.Plan == entity.Premium {
+			resGptImg, err := u.service.ImageGPT(ctx, prompt[1])
+			if err != nil {
+				u.logger.Error("Error generate image", zap.Error(err))
+				return err
+			}
+	
+			err = u.service.SendWA(ctx, model.ImageMessage{
+				MessagingProduct: "whatsapp",
+				RecipientType:    "individual",
+				To:               user.Number,
+				Type:             "image",
+				Image: model.Image{
+					Link: resGptImg.Data[0].URL,
+				},
+			})
+			if err != nil {
+				u.logger.Error("Error sending image", zap.Error(err))
+				return err
+			}
+		} else {
+			err = u.service.SendWA(ctx, model.WhatsAppMessage{
+				MessagingProduct: "whatsapp",
+				RecipientType: "individual",
+				To: user.Number,
+				Type: "text",
+				Text: model.MessageText{
+					PreviewURL: false,
+					Body: "You are in free plan and not have access to this feature",
+				},
+			})
+			if err != nil {
+				u.logger.Error("Error sending image", zap.Error(err))
+				return err
+			}
+		}
 	} else {
-
+		if user.Plan == entity.Free {
+			if user.RemainingRequest == 0 {
+				err = u.service.SendWA(ctx, model.WhatsAppMessage{
+					MessagingProduct: "whatsapp",
+					RecipientType:    "individual",
+					To:               user.Number,
+					Type:             "text",
+					Text: model.MessageText{
+						PreviewURL: false,
+						Body:       "Your reach the limit for free tier",
+					},
+				})
+				if err != nil {
+					u.logger.Error("Error send message limit", zap.Error(err))
+					return err
+				}
+				return nil
+			} else {
+				user.RemainingRequest -= 1
+				err = u.repo.UpdateUser(user)
+				if err != nil {
+					u.logger.Error("Error decrease remaining request", zap.Error(err))
+					return err
+				}
+			}
+		}
+		
+		var gptVersion string
 		// Get history gpt user
 		promptRedis, err := getRedis(ctx, u.redis, user.Number+":prompt")
 		if err != nil {
@@ -74,24 +140,50 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 			if err != nil {
 				u.logger.Error("Error unmarshal prompt group", zap.Error(err))
 			}
+		} else {
+			prompt = append(prompt, openai.ChatCompletionMessage{
+				Role:    openai.ChatMessageRoleSystem,
+				Content: "saya adalah model dengan gpt 4 yang memiliki pengetahuan terbaru",
+			})
 		}
 
-		// Add prompt user
+		// Add prompt user before gpt
 		prompt = append(prompt, openai.ChatCompletionMessage{
 			Role:    openai.ChatMessageRoleUser,
 			Content: text,
 		})
 
-		resGpt, err := u.service.TextGPT(ctx, prompt)
+		if user.Plan == entity.Free {
+			gptVersion = openai.GPT3Dot5Turbo1106
+		} else {
+			gptVersion = openai.GPT4TurboPreview
+		}
+
+		resGpt, err := u.service.TextGPT(ctx, gptVersion, prompt)
 		if err != nil {
 			u.logger.Error("Error generate gpt", zap.Error(err))
 			return errors.New("error gpt")
 		}
 
-		// Add prompt system
+		err = u.service.SendWA(ctx, model.WhatsAppMessage{
+			MessagingProduct: "whatsapp",
+			RecipientType:    "individual",
+			To:               user.Number,
+			Type:             "text",
+			Text: model.MessageText{
+				PreviewURL: false,
+				Body:       resGpt.Choices[0].Message.Content,
+			},
+		})
+		if err != nil {
+			u.logger.Error("Error sending message", zap.Error(err))
+			return err
+		}
+
+		// Add prompt system after gpt
 		prompt = append(prompt, openai.ChatCompletionMessage{
 			Role:    openai.ChatMessageRoleAssistant,
-			Content: resGpt,
+			Content: resGpt.Choices[0].Message.Content,
 		})
 
 		// Set prompt to redis
@@ -100,20 +192,27 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 			u.logger.Error("Error set redis", zap.Error(err))
 			return err
 		}
-		
-		err = u.service.SendWA(ctx, model.WhatsAppMessage{
-			MessagingProduct: "whatsapp",
-			RecipientType: "individual",
-			To: user.Number,
-			Type: "text",
-			Text: model.MessageText{
-				PreviewURL: false,
-				Body: resGpt,
-			},
-		})
+
+		// Add token logger
+		res, err := u.repo.GetUserLog(user.ID)
 		if err != nil {
-			u.logger.Error("Error sending message", zap.Error(err))
+			u.logger.Info("No user log for " + user.Number)
+			u.repo.InsertUserLog(&entity.UserLog{
+				UserID: user.ID,
+				TokenRequest: resGpt.Usage.PromptTokens,
+				TokenResponse: resGpt.Usage.CompletionTokens,
+				TokenUsage: resGpt.Usage.TotalTokens,
+			})
 			return err
+		} else {
+			res.TokenRequest += resGpt.Usage.PromptTokens
+			res.TokenResponse += resGpt.Usage.CompletionTokens
+			res.TokenUsage += resGpt.Usage.TotalTokens
+			err = u.repo.UpdateUserLog(res)
+			if err != nil {
+				u.logger.Error("Error update log user log", zap.Error(err))
+				return err
+			}
 		}
 	}
 

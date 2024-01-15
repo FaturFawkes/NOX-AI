@@ -8,4 +8,5 @@ import (
 
 func AutoMigrate(DB *gorm.DB) {
 	DB.AutoMigrate(&entity.User{})
+	DB.AutoMigrate(&entity.UserLog{})
 }
