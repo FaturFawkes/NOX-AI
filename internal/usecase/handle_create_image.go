@@ -13,7 +13,7 @@ func CreateImage(ctx context.Context, service service.IService, prompt string, u
 		return err
 	}
 
-	err = service.SendWA(ctx, model.ImageMessage{
+	err = service.SendWA(model.ImageMessage{
 		MessagingProduct: "whatsapp",
 		RecipientType:    "individual",
 		To:               user.Number,

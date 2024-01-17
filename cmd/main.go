@@ -94,7 +94,7 @@ func main() {
 func initRoute(e *echo.Echo, db *gorm.DB, redis *redis.Client, gpt *openai.Client, logger *zap.Logger, wa config.Whatsapp) {
 
 	repo := repository.NewRepository(db)
-	newService := service.NewService(gpt, client.NewHttpClient("https://graph.facebook.com", context.Background(), logger, 10*time.Second), wa)
+	newService := service.NewService(gpt, client.NewClient(), wa)
 	newUsecase := usecase.NewUsecase(repo, redis, logger, newService)
 	handler := delivery.NewDelivery(newUsecase, logger)
 

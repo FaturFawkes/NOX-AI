@@ -10,6 +10,6 @@ import (
 type IService interface {
 	TextGPT(ctx context.Context, model string, message []openai.ChatCompletionMessage) (*openai.ChatCompletionResponse, error)
 	ImageGPT(ctx context.Context, prompt string) (*openai.ImageResponse, error)
-	SendWA(ctx context.Context, data any) error
-	MarkRead(ctx context.Context, data model.WhatsAppStatus) error
+	SendWA(data any) error
+	MarkRead(data model.WhatsAppStatus) error
 }

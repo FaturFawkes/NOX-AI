@@ -17,7 +17,7 @@ func (u *Usecase) CheckNumber(ctx context.Context, data *entity.User) (*entity.U
 			return nil, err
 		}
 
-		err = u.service.SendWA(ctx, model.MessageTemplate{
+		err = u.service.SendWA(model.MessageTemplate{
 			MessagingProduct: "whatsapp",
 			RecipientType:    "individual",
 			To:               user.Number,

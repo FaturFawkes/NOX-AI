@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/FaturFawkes/NOX-AI/domain/entity"
 	"github.com/FaturFawkes/NOX-AI/internal/service/model"
 	"strings"
@@ -17,7 +18,7 @@ import (
 func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, text string) error {
 	var prompt []openai.ChatCompletionMessage
 
-	err := u.service.MarkRead(ctx, model.WhatsAppStatus{
+	err := u.service.MarkRead(model.WhatsAppStatus{
 		MessagingProduct: "whatsapp",
 		Status:           "read",
 		MessageID:        messageId,
@@ -28,7 +29,7 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 	}
 
 	if text == "/menu" {
-		err = u.service.SendWA(ctx, model.InteractiveMessage{
+		err = u.service.SendWA(model.InteractiveMessage{
 			MessagingProduct: "whatsapp",
 			RecipientType:    "individual",
 			To:               user.Number,
@@ -64,14 +65,14 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 		}
 	} else if strings.Contains(text, "/image") {
 		prompt := strings.Split(text, "/image")
-		if user.Plan == entity.Premium {
+		if user.Plan == entity.Premium && time.Now().Before(*user.ExpiredAt) {
 			resGptImg, err := u.service.ImageGPT(ctx, prompt[1])
 			if err != nil {
 				u.logger.Error("Error generate image", zap.Error(err))
 				return err
 			}
 
-			err = u.service.SendWA(ctx, model.ImageMessage{
+			err = u.service.SendWA(model.ImageMessage{
 				MessagingProduct: "whatsapp",
 				RecipientType:    "individual",
 				To:               user.Number,
@@ -85,7 +86,7 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 				return err
 			}
 		} else {
-			err = u.service.SendWA(ctx, model.WhatsAppMessage{
+			err = u.service.SendWA(model.WhatsAppMessage{
 				MessagingProduct: "whatsapp",
 				RecipientType:    "individual",
 				To:               user.Number,
@@ -101,9 +102,10 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 			}
 		}
 	} else {
+		fmt.Println("INI USER ", *user)
 		if user.Plan == entity.Free {
 			if user.RemainingRequest == 0 {
-				err = u.service.SendWA(ctx, model.WhatsAppMessage{
+				err = u.service.SendWA(model.WhatsAppMessage{
 					MessagingProduct: "whatsapp",
 					RecipientType:    "individual",
 					To:               user.Number,
@@ -153,10 +155,10 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 			Content: text,
 		})
 
-		if user.Plan == entity.Free {
-			gptVersion = openai.GPT3Dot5Turbo1106
-		} else {
+		if user.Plan != entity.Free && time.Now().Before(*user.ExpiredAt) {
 			gptVersion = openai.GPT4TurboPreview
+		} else {
+			gptVersion = openai.GPT3Dot5Turbo1106
 		}
 
 		resGpt, err := u.service.TextGPT(ctx, gptVersion, prompt)
@@ -165,7 +167,7 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 			return errors.New("error gpt")
 		}
 
-		err = u.service.SendWA(ctx, model.WhatsAppMessage{
+		err = u.service.SendWA(model.WhatsAppMessage{
 			MessagingProduct: "whatsapp",
 			RecipientType:    "individual",
 			To:               user.Number,

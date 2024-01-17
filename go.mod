@@ -4,6 +4,7 @@ go 1.21.0
 
 require (
 	github.com/go-redis/redis/v8 v8.11.5
+	github.com/go-resty/resty/v2 v2.11.0
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/sashabaranov/go-openai v1.18.2

@@ -1,26 +1,22 @@
 package service
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 )
 
-func (s *Service) SendWA(ctx context.Context, data any) error {
+func (s *Service) SendWA(data any) error {
 
 	dataByte, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("INI REQUEST ", string(dataByte))
-
-	header := make(map[string][]string)
-	header["Authorization"] = []string{"Bearer " + s.wa.Token}
-	header["Content-Type"] = []string{"application/json"}
-
-	_, err = s.http.Request(http.MethodPost, fmt.Sprintf("/%s/%s/messages", s.wa.Version, s.wa.Number), dataByte, header)
+	_, err = s.httpClient.R().
+		SetHeader("Content-Type", "application/json").
+		SetAuthToken(s.wa.Token).
+		SetBody(dataByte).
+		Post(s.wa.Host + fmt.Sprintf("/%s/%s/messages", s.wa.Version, s.wa.Number))
 	if err != nil {
 		return err
 	}

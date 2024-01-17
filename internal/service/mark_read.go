@@ -1,25 +1,23 @@
 package service
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/FaturFawkes/NOX-AI/internal/service/model"
-	"net/http"
 )
 
-func (s *Service) MarkRead(ctx context.Context, data model.WhatsAppStatus) error {
+func (s *Service) MarkRead(data model.WhatsAppStatus) error {
 
 	dataByte, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
 
-	header := make(map[string][]string)
-	header["Authorization"] = []string{"Bearer " + s.wa.Token}
-	header["Content-Type"] = []string{"application/json"}
-
-	_, err = s.http.Request(http.MethodPost, fmt.Sprintf("/%s/%s/messages", s.wa.Version, s.wa.Number), dataByte, header)
+	_, err = s.httpClient.R().
+		SetHeader("Content-Type", "application/json").
+		SetAuthToken(s.wa.Token).
+		SetBody(dataByte).
+		Put(s.wa.Host + fmt.Sprintf("/%s/%s/messages", s.wa.Version, s.wa.Number))
 	if err != nil {
 		return err
 	}

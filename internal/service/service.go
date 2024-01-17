@@ -2,21 +2,21 @@ package service
 
 import (
 	"github.com/FaturFawkes/NOX-AI/domain/service"
-	"github.com/FaturFawkes/NOX-AI/pkg/client"
 	"github.com/FaturFawkes/NOX-AI/pkg/config"
+	"github.com/go-resty/resty/v2"
 	"github.com/sashabaranov/go-openai"
 )
 
 type Service struct {
-	gpt  *openai.Client
-	http client.ClientHttp
-	wa   config.Whatsapp
+	gpt        *openai.Client
+	httpClient *resty.Client
+	wa         config.Whatsapp
 }
 
-func NewService(gpt *openai.Client, client client.ClientHttp, wa config.Whatsapp) service.IService {
+func NewService(gpt *openai.Client, client *resty.Client, wa config.Whatsapp) service.IService {
 	return &Service{
-		gpt:  gpt,
-		http: client,
-		wa:   wa,
+		gpt:        gpt,
+		httpClient: client,
+		wa:         wa,
 	}
 }
