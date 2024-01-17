@@ -4,3 +4,4 @@ go.sum
 vendor
 *.tar
 docker-compose.yml
+.idea/

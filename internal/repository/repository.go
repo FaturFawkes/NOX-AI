@@ -1,8 +1,7 @@
 package repository
 
 import (
-	"nox-ai/domain/repository"
-
+	"github.com/FaturFawkes/NOX-AI/domain/repository"
 	"gorm.io/gorm"
 )
 
@@ -14,4 +13,4 @@ func NewRepository(db *gorm.DB) repository.IRepository {
 	return &Repository{
 		db: db,
 	}
-} 
+}

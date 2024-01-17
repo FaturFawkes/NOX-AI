@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"nox-ai/internal/service/model"
+	"github.com/FaturFawkes/NOX-AI/internal/service/model"
 
 	"github.com/sashabaranov/go-openai"
 )

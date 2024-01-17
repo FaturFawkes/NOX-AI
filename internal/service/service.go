@@ -1,10 +1,9 @@
 package service
 
 import (
-	"nox-ai/domain/service"
-	"nox-ai/pkg/client"
-	"nox-ai/pkg/config"
-
+	"github.com/FaturFawkes/NOX-AI/domain/service"
+	"github.com/FaturFawkes/NOX-AI/pkg/client"
+	"github.com/FaturFawkes/NOX-AI/pkg/config"
 	"github.com/sashabaranov/go-openai"
 )
 

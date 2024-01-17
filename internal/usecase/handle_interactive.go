@@ -2,9 +2,10 @@ package usecase
 
 import (
 	"context"
-	"nox-ai/domain/entity"
-	"nox-ai/domain/service"
-	"nox-ai/internal/service/model"
+	"fmt"
+	"github.com/FaturFawkes/NOX-AI/domain/entity"
+	"github.com/FaturFawkes/NOX-AI/domain/service"
+	"github.com/FaturFawkes/NOX-AI/internal/service/model"
 
 	"github.com/go-redis/redis/v8"
 	"go.uber.org/zap"
@@ -64,7 +65,7 @@ func MyAccount(ctx context.Context, service service.IService, user *entity.User)
 	var message string
 	switch user.Plan {
 	case entity.Free:
-		message = "Your account is Free plan. You are using GPT 3.5"
+		message = fmt.Sprintf("Your account is Free plan. You are using GPT 3.5. Yor remaining quota daily %d", user.RemainingRequest)
 	case entity.Basic:
 		message = "Your account is Basic plan. You are using GPT 4 with limit 100 prompt per day"
 	case entity.Premium:

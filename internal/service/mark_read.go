@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/FaturFawkes/NOX-AI/internal/service/model"
 	"net/http"
-	"nox-ai/internal/service/model"
 )
 
 func (s *Service) MarkRead(ctx context.Context, data model.WhatsAppStatus) error {

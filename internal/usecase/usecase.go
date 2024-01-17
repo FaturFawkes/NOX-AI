@@ -1,10 +1,9 @@
 package usecase
 
 import (
-	"nox-ai/domain/repository"
-	"nox-ai/domain/service"
-	"nox-ai/domain/usecase"
-
+	"github.com/FaturFawkes/NOX-AI/domain/repository"
+	"github.com/FaturFawkes/NOX-AI/domain/service"
+	"github.com/FaturFawkes/NOX-AI/domain/usecase"
 	"github.com/go-redis/redis/v8"
 	"go.uber.org/zap"
 )
@@ -21,6 +20,6 @@ func NewUsecase(repo repository.IRepository, redis *redis.Client, logger *zap.Lo
 		repo:    repo,
 		service: service,
 		logger:  logger,
-		redis: redis,
+		redis:   redis,
 	}
 }

@@ -1,6 +1,6 @@
 package repository
 
-import "nox-ai/domain/entity"
+import "github.com/FaturFawkes/NOX-AI/domain/entity"
 
 func (r *Repository) GetUser(number string) (*entity.User, error) {
 	var user entity.User

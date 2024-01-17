@@ -1,4 +1,4 @@
-module nox-ai
+module github.com/FaturFawkes/NOX-AI
 
 go 1.21.0
 
@@ -6,7 +6,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.11.4
-	github.com/sashabaranov/go-openai v1.17.10
+	github.com/sashabaranov/go-openai v1.18.2
 	go.elastic.co/ecszap v1.0.2
 	go.uber.org/zap v1.26.0
 	gorm.io/driver/mysql v1.5.2

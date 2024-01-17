@@ -2,7 +2,7 @@ package usecase
 
 import (
 	"context"
-	"nox-ai/domain/entity"
+	"github.com/FaturFawkes/NOX-AI/domain/entity"
 )
 
 type IUsecase interface {

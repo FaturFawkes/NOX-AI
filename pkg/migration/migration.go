@@ -1,8 +1,7 @@
 package migration
 
 import (
-	"nox-ai/domain/entity"
-
+	"github.com/FaturFawkes/NOX-AI/domain/entity"
 	"gorm.io/gorm"
 )
 

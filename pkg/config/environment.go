@@ -1,7 +1,7 @@
 package config
 
 import (
-	"nox-ai/pkg/utils"
+	"github.com/FaturFawkes/NOX-AI/pkg/utils"
 	"os"
 
 	"github.com/joho/godotenv"

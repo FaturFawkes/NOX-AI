@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"nox-ai/domain/entity"
-	"nox-ai/internal/service/model"
+	"github.com/FaturFawkes/NOX-AI/domain/entity"
+	"github.com/FaturFawkes/NOX-AI/internal/service/model"
 	"strings"
 	"time"
 
@@ -70,7 +70,7 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 				u.logger.Error("Error generate image", zap.Error(err))
 				return err
 			}
-	
+
 			err = u.service.SendWA(ctx, model.ImageMessage{
 				MessagingProduct: "whatsapp",
 				RecipientType:    "individual",
@@ -87,12 +87,12 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 		} else {
 			err = u.service.SendWA(ctx, model.WhatsAppMessage{
 				MessagingProduct: "whatsapp",
-				RecipientType: "individual",
-				To: user.Number,
-				Type: "text",
+				RecipientType:    "individual",
+				To:               user.Number,
+				Type:             "text",
 				Text: model.MessageText{
 					PreviewURL: false,
-					Body: "You are in free plan and not have access to this feature",
+					Body:       "You are in free plan and not have access to this feature",
 				},
 			})
 			if err != nil {
@@ -127,7 +127,7 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 				}
 			}
 		}
-		
+
 		var gptVersion string
 		// Get history gpt user
 		promptRedis, err := getRedis(ctx, u.redis, user.Number+":prompt")
@@ -197,12 +197,15 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 		res, err := u.repo.GetUserLog(user.ID)
 		if err != nil {
 			u.logger.Info("No user log for " + user.Number)
-			u.repo.InsertUserLog(&entity.UserLog{
-				UserID: user.ID,
-				TokenRequest: resGpt.Usage.PromptTokens,
+			err = u.repo.InsertUserLog(&entity.UserLog{
+				UserID:        user.ID,
+				TokenRequest:  resGpt.Usage.PromptTokens,
 				TokenResponse: resGpt.Usage.CompletionTokens,
-				TokenUsage: resGpt.Usage.TotalTokens,
+				TokenUsage:    resGpt.Usage.TotalTokens,
 			})
+			if err != nil {
+				u.logger.Error("Error insert user log", zap.Error(err))
+			}
 			return err
 		} else {
 			res.TokenRequest += resGpt.Usage.PromptTokens

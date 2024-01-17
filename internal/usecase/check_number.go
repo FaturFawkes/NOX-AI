@@ -2,8 +2,8 @@ package usecase
 
 import (
 	"context"
-	"nox-ai/domain/entity"
-	"nox-ai/internal/service/model"
+	"github.com/FaturFawkes/NOX-AI/domain/entity"
+	"github.com/FaturFawkes/NOX-AI/internal/service/model"
 
 	"go.uber.org/zap"
 )
@@ -19,9 +19,9 @@ func (u *Usecase) CheckNumber(ctx context.Context, data *entity.User) (*entity.U
 
 		err = u.service.SendWA(ctx, model.MessageTemplate{
 			MessagingProduct: "whatsapp",
-			RecipientType: "individual",
-			To: user.Number,
-			Type: "template",
+			RecipientType:    "individual",
+			To:               user.Number,
+			Type:             "template",
 			Template: model.Template{
 				Name: "welcoming",
 				Language: model.Language{
@@ -46,7 +46,7 @@ func (u *Usecase) CheckNumber(ctx context.Context, data *entity.User) (*entity.U
 			u.logger.Error("Error sending greeting message", zap.Error(err))
 			return nil, err
 		}
-		
+
 	}
 
 	return user, nil

@@ -3,9 +3,9 @@ package delivery
 import (
 	"context"
 	"fmt"
+	"github.com/FaturFawkes/NOX-AI/domain/entity"
+	"github.com/FaturFawkes/NOX-AI/internal/delivery/request"
 	"net/http"
-	"nox-ai/domain/entity"
-	"nox-ai/internal/delivery/request"
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -42,7 +42,7 @@ func (dlv *Delivery) Message(c echo.Context) error {
 
 	switch message.Entry[0].Changes[0].Value.Messages[0].Type {
 	case "text":
-		go func ()  {
+		go func() {
 			err = dlv.usecase.HandleText(context.Background(), user, message.Entry[0].Changes[0].Value.Messages[0].ID, message.Entry[0].Changes[0].Value.Messages[0].Text.Body)
 		}()
 		return c.JSON(http.StatusOK, nil)

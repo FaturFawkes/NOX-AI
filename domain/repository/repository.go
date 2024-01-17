@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"nox-ai/domain/entity"
+	"github.com/FaturFawkes/NOX-AI/domain/entity"
 )
 
 type IRepository interface {

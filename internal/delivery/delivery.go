@@ -1,8 +1,8 @@
 package delivery
 
 import (
+	"github.com/FaturFawkes/NOX-AI/domain/usecase"
 	"go.uber.org/zap"
-	"nox-ai/domain/usecase"
 )
 
 type Delivery struct {

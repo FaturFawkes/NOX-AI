@@ -2,9 +2,9 @@ package usecase
 
 import (
 	"context"
-	"nox-ai/domain/entity"
-	"nox-ai/domain/service"
-	"nox-ai/internal/service/model"
+	"github.com/FaturFawkes/NOX-AI/domain/entity"
+	"github.com/FaturFawkes/NOX-AI/domain/service"
+	"github.com/FaturFawkes/NOX-AI/internal/service/model"
 )
 
 func CreateImage(ctx context.Context, service service.IService, prompt string, user *entity.User) error {
@@ -15,9 +15,9 @@ func CreateImage(ctx context.Context, service service.IService, prompt string, u
 
 	err = service.SendWA(ctx, model.ImageMessage{
 		MessagingProduct: "whatsapp",
-		RecipientType: "individual",
-		To: user.Number,
-		Type: "image",
+		RecipientType:    "individual",
+		To:               user.Number,
+		Type:             "image",
 		Image: model.Image{
 			Link: res.Data[0].URL,
 		},
@@ -25,6 +25,6 @@ func CreateImage(ctx context.Context, service service.IService, prompt string, u
 	if err != nil {
 		return err
 	}
-	
+
 	return nil
 }
