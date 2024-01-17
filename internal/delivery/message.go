@@ -46,6 +46,10 @@ func (dlv *Delivery) Message(c echo.Context) error {
 			err = dlv.usecase.HandleText(context.Background(), user, message.Entry[0].Changes[0].Value.Messages[0].ID, message.Entry[0].Changes[0].Value.Messages[0].Text.Body)
 		}()
 		return c.JSON(http.StatusOK, nil)
+	case "audio":
+		go func() {
+			err = dlv.usecase.HandleAudio(context.Background(), user, message.Entry[0].Changes[0].Value.Messages[0].ID, message.Entry[0].Changes[0].Value.Messages[0].Audio.ID)
+		}()
 	case "reaction":
 
 	case "image":

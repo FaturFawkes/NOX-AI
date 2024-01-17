@@ -47,6 +47,7 @@ type Message struct {
 	Type        string      `json:"type"`
 	Interactive Interactive `json:"interactive"`
 	Image       Image       `json:"image"`
+	Audio       Audio       `json:"audio"`
 }
 
 type Text struct {
@@ -78,4 +79,11 @@ type Image struct {
 	MimeType string `json:"mime_type"`
 	SHA256   string `json:"sha256"`
 	ID       string `json:"id"`
+}
+
+type Audio struct {
+	MimeType string `json:"mime_type"`
+	SHA256   string `json:"sha256"`
+	ID       string `json:"id"`
+	Voice    bool   `json:"voice"`
 }
