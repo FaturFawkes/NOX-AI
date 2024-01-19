@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/FaturFawkes/NOX-AI/domain/entity"
 	"github.com/FaturFawkes/NOX-AI/internal/service/model"
 	"strings"
@@ -102,7 +101,6 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 			}
 		}
 	} else {
-		fmt.Println("INI USER ", *user)
 		if user.Plan == entity.Free {
 			if user.RemainingRequest == 0 {
 				err = u.service.SendWA(model.WhatsAppMessage{
@@ -112,7 +110,7 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 					Type:             "text",
 					Text: model.MessageText{
 						PreviewURL: false,
-						Body:       "Your reach the limit for free tier",
+						Body:       "Your reach the daily limit for free tier",
 					},
 				})
 				if err != nil {
@@ -143,10 +141,12 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 				u.logger.Error("Error unmarshal prompt group", zap.Error(err))
 			}
 		} else {
-			prompt = append(prompt, openai.ChatCompletionMessage{
-				Role:    openai.ChatMessageRoleSystem,
-				Content: "saya adalah model dengan gpt 4 yang memiliki pengetahuan terbaru",
-			})
+			if user.Plan != entity.Free {
+				prompt = append(prompt, openai.ChatCompletionMessage{
+					Role:    openai.ChatMessageRoleSystem,
+					Content: "saya adalah model dengan gpt 4 yang memiliki pengetahuan terbaru",
+				})
+			}
 		}
 
 		// Add prompt user before gpt
@@ -213,6 +213,7 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 			res.TokenRequest += resGpt.Usage.PromptTokens
 			res.TokenResponse += resGpt.Usage.CompletionTokens
 			res.TokenUsage += resGpt.Usage.TotalTokens
+			res.TotalRequest++
 			err = u.repo.UpdateUserLog(res)
 			if err != nil {
 				u.logger.Error("Error update log user log", zap.Error(err))

@@ -17,7 +17,7 @@ func (s *Service) MarkRead(data model.WhatsAppStatus) error {
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(s.wa.Token).
 		SetBody(dataByte).
-		Put(s.wa.Host + fmt.Sprintf("/%s/%s/messages", s.wa.Version, s.wa.Number))
+		Post(s.wa.Host + fmt.Sprintf("/%s/%s/messages", s.wa.Version, s.wa.Number))
 	if err != nil {
 		return err
 	}

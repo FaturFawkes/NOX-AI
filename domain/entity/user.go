@@ -30,4 +30,5 @@ type UserLog struct {
 	TokenUsage    int
 	TokenRequest  int
 	TokenResponse int
+	TotalRequest  int
 }
