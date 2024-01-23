@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/FaturFawkes/NOX-AI/domain/entity"
+	"github.com/FaturFawkes/NOX-AI/domain/service"
 	"github.com/FaturFawkes/NOX-AI/internal/service/model"
 	"strings"
 	"time"
@@ -28,78 +30,9 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 	}
 
 	if text == "/menu" {
-		err = u.service.SendWA(model.InteractiveMessage{
-			MessagingProduct: "whatsapp",
-			RecipientType:    "individual",
-			To:               user.Number,
-			Type:             "interactive",
-			Interactive: model.InteractiveData{
-				Type: "list",
-				Body: model.InteractiveText{
-					Text: "Silahkan Pilih Menu Berikut",
-				},
-				Action: model.InteractiveAction{
-					Button: "Menu",
-					Sections: []model.InteractiveSection{
-						{
-							Title: "Menu",
-							Rows: []model.InteractiveRow{
-								{
-									ID:    "new-chat",
-									Title: "New Chat",
-								},
-								{
-									ID:    "my-account",
-									Title: "My Account",
-								},
-							},
-						},
-					},
-				},
-			},
-		})
-		if err != nil {
-			u.logger.Error("Error sending message", zap.Error(err))
-			return err
-		}
+		return sendMenu(u.service, user, u.logger)
 	} else if strings.Contains(text, "/image") {
-		prompt := strings.Split(text, "/image")
-		if user.Plan == entity.Premium && time.Now().Before(*user.ExpiredAt) {
-			resGptImg, err := u.service.ImageGPT(ctx, prompt[1])
-			if err != nil {
-				u.logger.Error("Error generate image", zap.Error(err))
-				return err
-			}
-
-			err = u.service.SendWA(model.ImageMessage{
-				MessagingProduct: "whatsapp",
-				RecipientType:    "individual",
-				To:               user.Number,
-				Type:             "image",
-				Image: model.Image{
-					Link: resGptImg.Data[0].URL,
-				},
-			})
-			if err != nil {
-				u.logger.Error("Error sending image", zap.Error(err))
-				return err
-			}
-		} else {
-			err = u.service.SendWA(model.WhatsAppMessage{
-				MessagingProduct: "whatsapp",
-				RecipientType:    "individual",
-				To:               user.Number,
-				Type:             "text",
-				Text: model.MessageText{
-					PreviewURL: false,
-					Body:       "You are in free plan and not have access to this feature",
-				},
-			})
-			if err != nil {
-				u.logger.Error("Error sending image", zap.Error(err))
-				return err
-			}
-		}
+		return handleImage(u.service, text, user, u.logger)
 	} else {
 		if user.Plan == entity.Free {
 			if user.RemainingRequest == 0 {
@@ -128,6 +61,7 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 			}
 		}
 
+		summarize := strings.Contains(text, "youtube.com")
 		var gptVersion string
 		// Get history gpt user
 		promptRedis, err := getRedis(ctx, u.redis, user.Number+":prompt")
@@ -146,6 +80,36 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 					Role:    openai.ChatMessageRoleSystem,
 					Content: "saya adalah model dengan gpt 4 yang memiliki pengetahuan terbaru",
 				})
+			}
+		}
+
+		if summarize {
+			if user.Plan != entity.Free && time.Now().Before(*user.ExpiredAt) {
+				code, transcribe, err := u.service.TranscribeYoutube(text, "id")
+				if code != 200 {
+					code, transcribe, err = u.service.TranscribeYoutube(text, "en")
+				}
+				if err != nil {
+					u.logger.Error("Error transcribe video", zap.Error(err))
+					return err
+				}
+				text = fmt.Sprint("Please summarize this transcript from youtube: \n", transcribe)
+			} else {
+				err = u.service.SendWA(model.WhatsAppMessage{
+					MessagingProduct: "whatsapp",
+					RecipientType:    "individual",
+					To:               user.Number,
+					Type:             "text",
+					Text: model.MessageText{
+						PreviewURL: false,
+						Body:       "Your are in free plan. Please upgrade to a starter or premium plan to access this feature.",
+					},
+				})
+				if err != nil {
+					u.logger.Error("Error send message expired", zap.Error(err))
+					return err
+				}
+				return nil
 			}
 		}
 
@@ -188,11 +152,13 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 			Content: resGpt.Choices[0].Message.Content,
 		})
 
-		// Set prompt to redis
-		err = setRedis(ctx, u.redis, user.Number+":prompt", prompt, 0)
-		if err != nil {
-			u.logger.Error("Error set redis", zap.Error(err))
-			return err
+		// Set prompt to redis if not summarize youtube
+		if !summarize {
+			err = setRedis(ctx, u.redis, user.Number+":prompt", prompt, 0)
+			if err != nil {
+				u.logger.Error("Error set redis", zap.Error(err))
+				return err
+			}
 		}
 
 		// Add token logger
@@ -220,6 +186,87 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 				return err
 			}
 		}
+	}
+
+	return nil
+}
+
+func handleImage(service service.IService, text string, user *entity.User, logger *zap.Logger) error {
+	prompt := strings.Split(text, "/image")
+	if user.Plan == entity.Premium && time.Now().Before(*user.ExpiredAt) {
+		resGptImg, err := service.ImageGPT(context.Background(), prompt[1])
+		if err != nil {
+			logger.Error("Error generate image", zap.Error(err))
+			return err
+		}
+
+		err = service.SendWA(model.ImageMessage{
+			MessagingProduct: "whatsapp",
+			RecipientType:    "individual",
+			To:               user.Number,
+			Type:             "image",
+			Image: model.Image{
+				Link: resGptImg.Data[0].URL,
+			},
+		})
+		if err != nil {
+			logger.Error("Error sending image", zap.Error(err))
+			return err
+		}
+	} else {
+		err := service.SendWA(model.WhatsAppMessage{
+			MessagingProduct: "whatsapp",
+			RecipientType:    "individual",
+			To:               user.Number,
+			Type:             "text",
+			Text: model.MessageText{
+				PreviewURL: false,
+				Body:       "Your are in free plan. Please upgrade to a starter or premium plan to access this feature.",
+			},
+		})
+		if err != nil {
+			logger.Error("Error sending image", zap.Error(err))
+			return err
+		}
+	}
+
+	return nil
+}
+
+func sendMenu(service service.IService, user *entity.User, logger *zap.Logger) error {
+	err := service.SendWA(model.InteractiveMessage{
+		MessagingProduct: "whatsapp",
+		RecipientType:    "individual",
+		To:               user.Number,
+		Type:             "interactive",
+		Interactive: model.InteractiveData{
+			Type: "list",
+			Body: model.InteractiveText{
+				Text: "Silahkan Pilih Menu Berikut",
+			},
+			Action: model.InteractiveAction{
+				Button: "Menu",
+				Sections: []model.InteractiveSection{
+					{
+						Title: "Menu",
+						Rows: []model.InteractiveRow{
+							{
+								ID:    "new-chat",
+								Title: "New Chat",
+							},
+							{
+								ID:    "my-account",
+								Title: "My Account",
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		logger.Error("Error sending message", zap.Error(err))
+		return err
 	}
 
 	return nil

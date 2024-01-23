@@ -14,4 +14,5 @@ type IService interface {
 	RetrieveMedia(audioId string) (string, error)
 	DownloadMedia(link string) (string, error)
 	TranscriptionGPT(ctx context.Context, path string) (string, error)
+	TranscribeYoutube(url string, lang string) (int, string, error)
 }
