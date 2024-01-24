@@ -96,7 +96,7 @@ func initRoute(e *echo.Echo, db *gorm.DB, redis *redis.Client, gpt *openai.Clien
 	repo := repository.NewRepository(db)
 	newService := service.NewService(gpt, client.NewClient(), wa)
 	newUsecase := usecase.NewUsecase(repo, redis, logger, newService)
-	handler := delivery.NewDelivery(newUsecase, logger)
+	handler := delivery.NewDelivery(newUsecase, logger, newService)
 
 	e.POST("/webhook", handler.Message)
 	e.GET("/webhook", handler.Validate)

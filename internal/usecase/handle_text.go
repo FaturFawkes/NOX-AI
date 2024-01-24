@@ -16,18 +16,8 @@ import (
 	"go.uber.org/zap"
 )
 
-func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, text string) error {
+func (u *Usecase) HandleText(ctx context.Context, user *entity.User, text string) error {
 	var prompt []openai.ChatCompletionMessage
-
-	err := u.service.MarkRead(model.WhatsAppStatus{
-		MessagingProduct: "whatsapp",
-		Status:           "read",
-		MessageID:        messageId,
-	})
-	if err != nil {
-		u.logger.Error("Error mark read message", zap.Error(err))
-		panic(err)
-	}
 
 	if text == "/menu" {
 		return sendMenu(u.service, user, u.logger)
@@ -36,7 +26,7 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 	} else {
 		if user.Plan == entity.Free {
 			if user.RemainingRequest == 0 {
-				err = u.service.SendWA(model.WhatsAppMessage{
+				err := u.service.SendWA(model.WhatsAppMessage{
 					MessagingProduct: "whatsapp",
 					RecipientType:    "individual",
 					To:               user.Number,
@@ -53,7 +43,7 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 				return nil
 			} else {
 				user.RemainingRequest -= 1
-				err = u.repo.UpdateUser(user)
+				err := u.repo.UpdateUser(user)
 				if err != nil {
 					u.logger.Error("Error decrease remaining request", zap.Error(err))
 					return err

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/FaturFawkes/NOX-AI/domain/entity"
 	"github.com/FaturFawkes/NOX-AI/internal/delivery/request"
+	"github.com/FaturFawkes/NOX-AI/internal/service/model"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -35,6 +36,15 @@ func (dlv *Delivery) Message(c echo.Context) error {
 		Plan:      entity.Free,
 	}
 
+	err = dlv.service.MarkRead(model.WhatsAppStatus{
+		MessagingProduct: "whatsapp",
+		Status:           "read",
+		MessageID:        message.Entry[0].Changes[0].Value.Messages[0].ID,
+	})
+	if err != nil {
+		fmt.Println("Error read message", err.Error())
+	}
+
 	user, err := dlv.usecase.CheckNumber(c.Request().Context(), data)
 	if err != nil {
 		return c.JSON(http.StatusOK, zap.Error(err))
@@ -43,16 +53,19 @@ func (dlv *Delivery) Message(c echo.Context) error {
 	switch message.Entry[0].Changes[0].Value.Messages[0].Type {
 	case "text":
 		go func() {
-			err = dlv.usecase.HandleText(context.Background(), user, message.Entry[0].Changes[0].Value.Messages[0].ID, message.Entry[0].Changes[0].Value.Messages[0].Text.Body)
+			err = dlv.usecase.HandleText(context.Background(), user, message.Entry[0].Changes[0].Value.Messages[0].Text.Body)
 		}()
 		return c.JSON(http.StatusOK, nil)
 	case "audio":
 		go func() {
-			err = dlv.usecase.HandleAudio(context.Background(), user, message.Entry[0].Changes[0].Value.Messages[0].ID, message.Entry[0].Changes[0].Value.Messages[0].Audio.ID)
+			err = dlv.usecase.HandleAudio(context.Background(), user, message.Entry[0].Changes[0].Value.Messages[0].Audio.ID)
 		}()
 	case "reaction":
 
 	case "image":
+		go func() {
+			err = dlv.usecase.HandleImage(context.Background(), user, message.Entry[0].Changes[0].Value.Messages[0].Image)
+		}()
 
 	case "sticker":
 
@@ -61,7 +74,7 @@ func (dlv *Delivery) Message(c echo.Context) error {
 	case "button":
 
 	case "interactive":
-		err = dlv.usecase.HandleInteractive(c.Request().Context(), user, message.Entry[0].Changes[0].Value.Messages[0].ID, message.Entry[0].Changes[0].Value.Messages[0].Interactive.ListReply.ID)
+		err = dlv.usecase.HandleInteractive(c.Request().Context(), user, message.Entry[0].Changes[0].Value.Messages[0].Interactive.ListReply.ID)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, "Error handle interactive message")
 		}

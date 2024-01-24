@@ -11,17 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (u *Usecase) HandleInteractive(ctx context.Context, user *entity.User, messageId, replyId string) error {
-	err := u.service.MarkRead(model.WhatsAppStatus{
-		MessagingProduct: "whatsapp",
-		Status:           "read",
-		MessageID:        messageId,
-	})
-	if err != nil {
-		u.logger.Error("Error mark read message", zap.Error(err))
-		panic(err)
-	}
-
+func (u *Usecase) HandleInteractive(ctx context.Context, user *entity.User, replyId string) error {
 	switch replyId {
 	case "new-chat":
 		if err := NewChat(ctx, u.redis, u.service, user); err != nil {

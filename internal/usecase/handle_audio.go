@@ -3,23 +3,11 @@ package usecase
 import (
 	"context"
 	"github.com/FaturFawkes/NOX-AI/domain/entity"
-	"github.com/FaturFawkes/NOX-AI/internal/service/model"
 	"go.uber.org/zap"
 	"os"
 )
 
-func (u *Usecase) HandleAudio(ctx context.Context, user *entity.User, messageId, audioId string) error {
-
-	err := u.service.MarkRead(model.WhatsAppStatus{
-		MessagingProduct: "whatsapp",
-		Status:           "read",
-		MessageID:        messageId,
-	})
-	if err != nil {
-		u.logger.Error("Error mark read message", zap.Error(err))
-		panic(err)
-	}
-
+func (u *Usecase) HandleAudio(ctx context.Context, user *entity.User, audioId string) error {
 	// Get Audio Data
 	audioUrl, err := u.service.RetrieveMedia(audioId)
 	if err != nil {
@@ -46,7 +34,7 @@ func (u *Usecase) HandleAudio(ctx context.Context, user *entity.User, messageId,
 		return err
 	}
 
-	err = u.HandleText(ctx, user, messageId, text)
+	err = u.HandleText(ctx, user, text)
 	if err != nil {
 		return err
 	}
