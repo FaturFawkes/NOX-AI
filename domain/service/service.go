@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"github.com/FaturFawkes/NOX-AI/domain/entity"
 	"github.com/FaturFawkes/NOX-AI/internal/service/model"
 	"github.com/sashabaranov/go-openai"
 )
@@ -12,7 +13,7 @@ type IService interface {
 	SendWA(data any) error
 	MarkRead(data model.WhatsAppStatus) error
 	RetrieveMedia(audioId string) (string, error)
-	DownloadMedia(link string) (string, error)
+	DownloadMedia(link string, mediaType entity.TypeMedia) (string, error)
 	TranscriptionGPT(ctx context.Context, path string) (string, error)
 	TranscribeYoutube(url string, lang string) (int, string, error)
 }

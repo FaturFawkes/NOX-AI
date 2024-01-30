@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/sashabaranov/go-openai"
@@ -16,6 +17,9 @@ func (s *Service) TextGPT(ctx context.Context, model string, message []openai.Ch
 		fmt.Println("[DEBUG AI] error: ", err)
 		return nil, err
 	}
+
+	respJson, _ := json.Marshal(resp)
+	fmt.Println("Response GPT : ", string(respJson))
 
 	return &resp, nil
 }

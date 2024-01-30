@@ -15,7 +15,7 @@ func (s *Service) RetrieveMedia(audioId string) (string, error) {
 		return "nil", err
 	}
 
-	var data model.AudioFile
+	var data model.MediaFile
 
 	err = json.Unmarshal(resp.Body(), &data)
 	if err != nil {

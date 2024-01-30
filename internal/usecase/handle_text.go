@@ -159,7 +159,7 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, text string
 				UserID:        user.ID,
 				TokenRequest:  resGpt.Usage.PromptTokens,
 				TokenResponse: resGpt.Usage.CompletionTokens,
-				TokenUsage:    resGpt.Usage.TotalTokens,
+				TokenUsage:    1,
 			})
 			if err != nil {
 				u.logger.Error("Error insert user log", zap.Error(err))

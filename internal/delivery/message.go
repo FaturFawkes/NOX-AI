@@ -30,10 +30,11 @@ func (dlv *Delivery) Message(c echo.Context) error {
 	}
 
 	data := &entity.User{
-		Name:      message.Entry[0].Changes[0].Value.Contacts[0].Profile.Name,
-		Number:    message.Entry[0].Changes[0].Value.Contacts[0].WaID,
-		ExpiredAt: nil,
-		Plan:      entity.Free,
+		Name:             message.Entry[0].Changes[0].Value.Contacts[0].Profile.Name,
+		Number:           message.Entry[0].Changes[0].Value.Contacts[0].WaID,
+		ExpiredAt:        nil,
+		Plan:             entity.Free,
+		RemainingRequest: 20,
 	}
 
 	err = dlv.service.MarkRead(model.WhatsAppStatus{

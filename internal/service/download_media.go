@@ -2,12 +2,19 @@ package service
 
 import (
 	"fmt"
+	"github.com/FaturFawkes/NOX-AI/domain/entity"
 	"math/rand"
 	"time"
 )
 
-func (s *Service) DownloadMedia(link string) (string, error) {
-	path := fmt.Sprintf("%s.ogg", String(10))
+func (s *Service) DownloadMedia(link string, mediaType entity.TypeMedia) (string, error) {
+	var path string
+
+	if mediaType == entity.TypeImage {
+		path = fmt.Sprintf("%s.ogg", String(10))
+	} else {
+		path = fmt.Sprintf("%s.png", String(10))
+	}
 	_, err := s.httpClient.R().
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(s.wa.Token).

@@ -15,7 +15,7 @@ func (u *Usecase) HandleAudio(ctx context.Context, user *entity.User, audioId st
 		return err
 	}
 
-	audioPath, err := u.service.DownloadMedia(audioUrl)
+	audioPath, err := u.service.DownloadMedia(audioUrl, entity.TypeAudio)
 	if err != nil {
 		u.logger.Error("Error download audio", zap.Error(err))
 		return err
