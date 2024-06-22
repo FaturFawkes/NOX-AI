@@ -45,7 +45,7 @@ func (u *Usecase) HandleImage(ctx context.Context, user *entity.User, image requ
 		return err
 	}
 
-	resGpt, err := u.service.TextGPT(ctx, openai.GPT4VisionPreview, []openai.ChatCompletionMessage{
+	resGpt, err := u.service.TextGPT(ctx, openai.GPT4TurboPreview, []openai.ChatCompletionMessage{
 		{
 			Role: "user",
 			MultiContent: []openai.ChatMessagePart{
