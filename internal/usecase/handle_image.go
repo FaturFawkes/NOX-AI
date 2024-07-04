@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/base64"
 	"github.com/FaturFawkes/NOX-AI/domain/entity"
+	"github.com/FaturFawkes/NOX-AI/domain/service"
 	"github.com/FaturFawkes/NOX-AI/internal/delivery/request"
 	"github.com/FaturFawkes/NOX-AI/internal/service/model"
 	"github.com/sashabaranov/go-openai"
 	"go.uber.org/zap"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -45,7 +47,7 @@ func (u *Usecase) HandleImage(ctx context.Context, user *entity.User, image requ
 		return err
 	}
 
-	resGpt, err := u.service.TextGPT(ctx, openai.GPT4TurboPreview, []openai.ChatCompletionMessage{
+	resGpt, err := u.service.TextGPT(ctx, openai.GPT4o20240513, []openai.ChatCompletionMessage{
 		{
 			Role: "user",
 			MultiContent: []openai.ChatMessagePart{
@@ -103,4 +105,46 @@ func encodeImage(imagePath string) (string, error) {
 		return "", err
 	}
 	return base64.StdEncoding.EncodeToString(imageBytes), nil
+}
+
+func ImageGPT(service service.IService, text string, user *entity.User, logger *zap.Logger) error {
+	prompt := strings.Split(text, "/image")
+	if user.Plan == entity.Premium && time.Now().Before(*user.ExpiredAt) {
+		resGptImg, err := service.ImageGPT(context.Background(), prompt[1])
+		if err != nil {
+			logger.Error("Error generate image", zap.Error(err))
+			return err
+		}
+
+		err = service.SendWA(model.ImageMessage{
+			MessagingProduct: "whatsapp",
+			RecipientType:    "individual",
+			To:               user.Number,
+			Type:             "image",
+			Image: model.Image{
+				Link: resGptImg.Data[0].URL,
+			},
+		})
+		if err != nil {
+			logger.Error("Error sending image", zap.Error(err))
+			return err
+		}
+	} else {
+		err := service.SendWA(model.WhatsAppMessage{
+			MessagingProduct: "whatsapp",
+			RecipientType:    "individual",
+			To:               user.Number,
+			Type:             "text",
+			Text: model.MessageText{
+				PreviewURL: false,
+				Body:       "Your are in free plan. Please upgrade to a starter or premium plan to access this feature.",
+			},
+		})
+		if err != nil {
+			logger.Error("Error sending image", zap.Error(err))
+			return err
+		}
+	}
+
+	return nil
 }

@@ -29,6 +29,13 @@ func (dlv *Delivery) Message(c echo.Context) error {
 		return c.JSON(http.StatusOK, "bad request")
 	}
 
+	// Logger
+	dlv.logger.Info("Received message", zap.Any("message", message))
+
+	if message.Entry[0].Changes[0].Value.Messages == nil {
+		return c.JSON(http.StatusOK, "Callback OK")
+	}
+
 	data := &entity.User{
 		Name:             message.Entry[0].Changes[0].Value.Contacts[0].Profile.Name,
 		Number:           message.Entry[0].Changes[0].Value.Contacts[0].WaID,

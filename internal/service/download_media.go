@@ -10,7 +10,7 @@ import (
 func (s *Service) DownloadMedia(link string, mediaType entity.TypeMedia) (string, error) {
 	var path string
 
-	if mediaType == entity.TypeImage {
+	if mediaType == entity.TypeAudio {
 		path = fmt.Sprintf("%s.ogg", String(10))
 	} else {
 		path = fmt.Sprintf("%s.png", String(10))

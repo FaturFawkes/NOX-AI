@@ -22,7 +22,7 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, text string
 	if text == "/menu" {
 		return sendMenu(u.service, user, u.logger)
 	} else if strings.Contains(text, "/image") {
-		return handleImage(u.service, text, user, u.logger)
+		return ImageGPT(u.service, text, user, u.logger)
 	} else {
 		if user.Plan == entity.Free {
 			if user.RemainingRequest == 0 {
@@ -51,7 +51,7 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, text string
 			}
 		}
 
-		summarize := strings.Contains(text, "youtube.com")
+		summarize := strings.Contains(text, "youtube.com") || strings.Contains(text, "youtu.be")
 		var gptVersion string
 		// Get history gpt user
 		promptRedis, err := getRedis(ctx, u.redis, user.Number+":prompt")
@@ -68,7 +68,7 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, text string
 			if user.Plan != entity.Free {
 				prompt = append(prompt, openai.ChatCompletionMessage{
 					Role:    openai.ChatMessageRoleSystem,
-					Content: "saya adalah model dengan gpt 4 yang memiliki pengetahuan terbaru",
+					Content: "gue adalah model gpt bisa pakai bahasa santai dan asik buat ngobrol",
 				})
 			}
 		}
@@ -176,48 +176,6 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, text string
 				u.logger.Error("Error update log user log", zap.Error(err))
 				return err
 			}
-		}
-	}
-
-	return nil
-}
-
-func handleImage(service service.IService, text string, user *entity.User, logger *zap.Logger) error {
-	prompt := strings.Split(text, "/image")
-	if user.Plan == entity.Premium && time.Now().Before(*user.ExpiredAt) {
-		resGptImg, err := service.ImageGPT(context.Background(), prompt[1])
-		if err != nil {
-			logger.Error("Error generate image", zap.Error(err))
-			return err
-		}
-
-		err = service.SendWA(model.ImageMessage{
-			MessagingProduct: "whatsapp",
-			RecipientType:    "individual",
-			To:               user.Number,
-			Type:             "image",
-			Image: model.Image{
-				Link: resGptImg.Data[0].URL,
-			},
-		})
-		if err != nil {
-			logger.Error("Error sending image", zap.Error(err))
-			return err
-		}
-	} else {
-		err := service.SendWA(model.WhatsAppMessage{
-			MessagingProduct: "whatsapp",
-			RecipientType:    "individual",
-			To:               user.Number,
-			Type:             "text",
-			Text: model.MessageText{
-				PreviewURL: false,
-				Body:       "Your are in free plan. Please upgrade to a starter or premium plan to access this feature.",
-			},
-		})
-		if err != nil {
-			logger.Error("Error sending image", zap.Error(err))
-			return err
 		}
 	}
 
