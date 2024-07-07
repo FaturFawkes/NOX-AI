@@ -155,7 +155,10 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 		}
 
 		//	Insert Logs
-
+		err = u.InserUserLog(user, resGpt)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
