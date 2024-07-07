@@ -16,7 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (u *Usecase) HandleText(ctx context.Context, user *entity.User, text string) error {
+func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, text string) error {
 	var prompt []openai.ChatCompletionMessage
 
 	if text == "/menu" {
@@ -126,6 +126,9 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, text string
 			RecipientType:    "individual",
 			To:               user.Number,
 			Type:             "text",
+			Context: model.ContextMessage{
+				MessageID: messageId,
+			},
 			Text: model.MessageText{
 				PreviewURL: false,
 				Body:       resGpt.Choices[0].Message.Content,

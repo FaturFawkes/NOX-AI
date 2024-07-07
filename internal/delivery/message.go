@@ -61,7 +61,7 @@ func (dlv *Delivery) Message(c echo.Context) error {
 	switch message.Entry[0].Changes[0].Value.Messages[0].Type {
 	case "text":
 		go func() {
-			err = dlv.usecase.HandleText(context.Background(), user, message.Entry[0].Changes[0].Value.Messages[0].Text.Body)
+			err = dlv.usecase.HandleText(context.Background(), user, message.Entry[0].Changes[0].Value.Messages[0].ID, message.Entry[0].Changes[0].Value.Messages[0].Text.Body)
 		}()
 		return c.JSON(http.StatusOK, nil)
 	case "audio":
