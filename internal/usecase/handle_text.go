@@ -154,32 +154,8 @@ func (u *Usecase) HandleText(ctx context.Context, user *entity.User, messageId, 
 			}
 		}
 
-		// Add token logger
-		res, err := u.repo.GetUserLog(user.ID)
-		if err != nil {
-			u.logger.Info("No user log for " + user.Number)
-			err = u.repo.InsertUserLog(&entity.UserLog{
-				UserID:        user.ID,
-				TokenRequest:  resGpt.Usage.PromptTokens,
-				TokenResponse: resGpt.Usage.CompletionTokens,
-				TokenUsage:    resGpt.Usage.TotalTokens,
-				TotalRequest:  1,
-			})
-			if err != nil {
-				u.logger.Error("Error insert user log", zap.Error(err))
-			}
-			return err
-		} else {
-			res.TokenRequest += resGpt.Usage.PromptTokens
-			res.TokenResponse += resGpt.Usage.CompletionTokens
-			res.TokenUsage += resGpt.Usage.TotalTokens
-			res.TotalRequest++
-			err = u.repo.UpdateUserLog(res)
-			if err != nil {
-				u.logger.Error("Error update log user log", zap.Error(err))
-				return err
-			}
-		}
+		//	Insert Logs
+
 	}
 
 	return nil
@@ -234,7 +210,6 @@ func getRedis(ctx context.Context, redis *redis.Client, key string) (string, err
 }
 
 func setRedis(ctx context.Context, redis *redis.Client, key string, data any, duration time.Duration) error {
-
 	dataCnv, err := json.Marshal(data)
 	if err != nil {
 		return err

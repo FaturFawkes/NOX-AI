@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/FaturFawkes/NOX-AI/domain/entity"
 	"github.com/FaturFawkes/NOX-AI/internal/service/model"
+	"github.com/sashabaranov/go-openai"
 
 	"go.uber.org/zap"
 )
@@ -50,4 +51,35 @@ func (u *Usecase) CheckNumber(ctx context.Context, data *entity.User) (*entity.U
 	}
 
 	return user, nil
+}
+
+func (u *Usecase) InserUserLog(user *entity.User, resGpt *openai.ChatCompletionResponse) error {
+	// Add token logger
+	res, err := u.repo.GetUserLog(user.ID)
+	if err != nil {
+		u.logger.Info("No user log for " + user.Number)
+		err = u.repo.InsertUserLog(&entity.UserLog{
+			UserID:        user.ID,
+			TokenRequest:  resGpt.Usage.PromptTokens,
+			TokenResponse: resGpt.Usage.CompletionTokens,
+			TokenUsage:    resGpt.Usage.TotalTokens,
+			TotalRequest:  1,
+		})
+		if err != nil {
+			u.logger.Error("Error insert user log", zap.Error(err))
+		}
+		return err
+	} else {
+		res.TokenRequest += resGpt.Usage.PromptTokens
+		res.TokenResponse += resGpt.Usage.CompletionTokens
+		res.TokenUsage += resGpt.Usage.TotalTokens
+		res.TotalRequest++
+		err = u.repo.UpdateUserLog(res)
+		if err != nil {
+			u.logger.Error("Error update log user log", zap.Error(err))
+			return err
+		}
+	}
+
+	return err
 }
