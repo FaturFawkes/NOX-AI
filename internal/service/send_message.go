@@ -12,7 +12,7 @@ func (s *Service) SendWA(data any) error {
 		return err
 	}
 
-	_, err = s.httpClient.R().
+	resp, err := s.httpClient.R().
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(s.wa.Token).
 		SetBody(dataByte).
@@ -20,6 +20,8 @@ func (s *Service) SendWA(data any) error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Println("INI RESPONSE WA ", string(resp.Body()))
 
 	return nil
 }

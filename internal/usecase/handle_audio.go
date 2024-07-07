@@ -11,7 +11,7 @@ import (
 	"os"
 )
 
-func (u *Usecase) HandleAudio(ctx context.Context, user *entity.User, audioId string) error {
+func (u *Usecase) HandleAudio(ctx context.Context, user *entity.User, messageId, audioId string) error {
 	var prompt []openai.ChatCompletionMessage
 
 	// Get Audio Data
@@ -71,24 +71,18 @@ func (u *Usecase) HandleAudio(ctx context.Context, user *entity.User, audioId st
 		Content: resGpt.Choices[0].Message.Content,
 	})
 
-	// Text to speech
-	resAudio, err := u.service.AudioGPT(ctx, resGpt.Choices[0].Message.Content)
-	if err != nil {
-		u.logger.Error("Error generate audio", zap.Error(err))
-	}
-
-	resAudioId, err := u.service.UploadAudio(resAudio)
-	if err != nil {
-		return errors.New("error upload audio")
-	}
-
 	// Sending voice to Whatsapp
-	err = u.service.SendWA(model.MessageAudio{
-		To:            user.Number,
-		Type:          "audio",
-		RecipientType: "individual",
-		Audio: model.Audio{
-			ID: *resAudioId,
+	err = u.service.SendWA(model.WhatsAppMessage{
+		MessagingProduct: "whatsapp",
+		RecipientType:    "individual",
+		To:               user.Number,
+		Type:             "text",
+		Text: model.MessageText{
+			PreviewURL: false,
+			Body:       resGpt.Choices[0].Message.Content,
+		},
+		Context: model.ContextMessage{
+			MessageID: messageId,
 		},
 	})
 	if err != nil {
